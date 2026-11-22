@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>{{title}} · Proxy-Plugin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f6f6f9;
+      --card: #fff;
+      --ink: #19191f;
+      --muted: #61616d;
+      --line: #ededf2;
+      --accent: #11668d;
+      --soft: #edf7fc;
+      font-family: "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    h1, h2, p { margin: 0; }
+
+    #container {
+      width: 720px;
+      padding: 32px;
+      color: var(--ink);
+      background: var(--background);
+    }
+
+    .brand {
+      color: var(--accent);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    h1 {
+      margin-top: 6px;
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1.16;
+    }
+
+    .guide {
+      margin: 20px 0;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: var(--soft);
+      color: var(--accent);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      margin-top: 14px;
+      padding: 14px 20px 6px;
+      border-radius: 16px;
+      background: var(--card);
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      padding-left: 10px;
+      border-left: 4px solid var(--accent);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+      align-items: baseline;
+      gap: 12px;
+      padding: 9px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .command {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .primary .command { color: var(--accent); }
+
+    .description {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.45;
+      text-align: right;
+    }
+
+    footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main id="container">
+    <header>
+      <p class="brand">Proxy-Plugin</p>
+      <h1>{{title}}</h1>
+    </header>
+    <p class="guide">{{guide}}</p>
+    {{each sections section}}
+    <section class="panel{{if section.primary}} primary{{/if}}">
+      <h2>{{section.title}}</h2>
+      {{each section.rows row}}
+      <div class="row">
+        <p class="command">{{row[0]}}</p>
+        <p class="description">{{row[1]}}</p>
+      </div>
+      {{/each}}
+    </section>
+    {{/each}}
+    <footer>{{footer}}</footer>
+  </main>
+</body>
+</html>

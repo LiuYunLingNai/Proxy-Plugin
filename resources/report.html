@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>{{title}} · Proxy-Plugin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --surface: #f6f6f9;
+      --card: #fff;
+      --ink: #19191f;
+      --muted: #61616d;
+      --line: #ededf2;
+      --accent: #11668d;
+      --accent-soft: #edf7fc;
+      font-family: "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body, h1, h2, p { margin: 0; }
+    #container { width: 720px; padding: 32px; color: var(--ink); background: var(--surface); }
+
+    .brand { color: var(--accent); font-size: 20px; font-weight: 700; line-height: 1.3; }
+    h1 { margin-top: 6px; font-size: 44px; line-height: 1.16; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 18px; line-height: 1.5; overflow-wrap: anywhere; }
+
+    .metrics { display: flex; gap: 12px; margin-top: 18px; }
+    .metric { min-width: 0; flex: 1; padding: 14px 16px; border-radius: 14px; background: var(--card); }
+    .metric-label { color: var(--muted); font-size: 16px; line-height: 1.4; }
+    .metric-value { display: block; margin-top: 5px; font-size: 28px; font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; }
+
+    .note {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-size: 17px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .panel { margin-top: 16px; padding: 14px 20px 6px; border-radius: 16px; background: var(--card); }
+    h2 { margin-bottom: 8px; padding-left: 10px; border-left: 4px solid var(--accent); font-size: 20px; line-height: 1.3; }
+    .row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+    .panel:not(.titled) .row:first-child { border-top: 0; }
+    .number {
+      flex: 0 0 30px;
+      min-height: 28px;
+      padding: 3px 4px;
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 16px;
+      font-variant-numeric: tabular-nums;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .row-body { min-width: 0; flex: 1; }
+    .row-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+    .row-label { min-width: 0; font-size: 19px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+    .detail { margin-top: 4px; color: var(--muted); font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+    .row-value {
+      flex: 0 1 auto;
+      max-width: 56%;
+      border-radius: 7px;
+      padding: 3px 8px;
+      font-size: 17px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.35;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .tag { border-radius: 6px; padding: 2px 6px; font-size: 14px; font-weight: 700; line-height: 1.4; }
+    .success { --tone-ink: #167447; --tone-soft: #eaf8ef; }
+    .warning { --tone-ink: #945500; --tone-soft: #fff2db; }
+    .danger { --tone-ink: #b02736; --tone-soft: #ffedef; }
+    .info { --tone-ink: var(--accent); --tone-soft: var(--accent-soft); }
+    .metric-value, .row-value, .tag { color: var(--tone-ink, var(--ink)); }
+    .row-value, .tag { background: var(--tone-soft, transparent); }
+
+    .empty { padding: 18px 0; color: var(--muted); font-size: 18px; line-height: 1.5; }
+    footer { margin-top: 16px; color: var(--muted); font-size: 16px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main id="container">
+    <header>
+      <p class="brand">Proxy-Plugin</p>
+      <h1>{{title}}</h1>
+      {{if subtitle}}<p class="subtitle">{{subtitle}}</p>{{/if}}
+    </header>
+    {{if metrics && metrics.length}}
+    <section class="metrics">
+      {{each metrics metric}}
+      <div class="metric">
+        <p class="metric-label">{{metric.label}}</p>
+        <strong class="metric-value {{metric.tone}}">{{metric.value}}</strong>
+      </div>
+      {{/each}}
+    </section>
+    {{/if}}
+    {{if note}}<p class="note">{{note}}</p>{{/if}}
+    {{each panels panel}}
+    <section class="panel{{if panel.title}} titled{{/if}}">
+      {{if panel.title}}<h2>{{panel.title}}</h2>{{/if}}
+      {{if panel.rows.length}}
+      {{each panel.rows row}}
+      <div class="row">
+        {{if row.number}}<span class="number">{{row.number}}</span>{{/if}}
+        <div class="row-body">
+          <div class="row-name">
+            <span class="row-label">{{row.label}}</span>
+            {{each row.tags tag}}<span class="tag {{tag.tone}}">{{tag.value}}</span>{{/each}}
+          </div>
+          {{each row.detail item}}<p class="detail">{{item}}</p>{{/each}}
+        </div>
+        {{if row.value}}<span class="row-value {{row.tone}}">{{row.value}}</span>{{/if}}
+      </div>
+      {{/each}}
+      {{else}}
+      <p class="empty">{{panel.empty}}</p>
+      {{/if}}
+    </section>
+    {{/each}}
+    {{if footer}}<footer>{{footer}}</footer>{{/if}}
+  </main>
+</body>
+</html>

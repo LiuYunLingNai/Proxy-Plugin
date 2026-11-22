@@ -1,0 +1,15 @@
+{
+  "name": "yunzai-proxy-plugin",
+  "version": "0.2.0",
+  "private": true,
+  "description": "TRSS-Yunzai mihomo 系统代理与 TUN 管理插件",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build:web": "npm --prefix webui run build",
+    "check:web": "npm --prefix webui run typecheck"
+  },
+  "peerDependencies": {
+    "yaml": ">=2"
+  }
+}

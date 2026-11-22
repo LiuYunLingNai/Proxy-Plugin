@@ -98,27 +98,6 @@ webui:
 
 修改 WebUI 开关、挂载方式、地址或端口后，**重启 Yunzai**，再用 `#代理web` 获取新链接。`enabled: false` 会关闭 WebUI，机器人仍可管理核心。独立监听也由 Yunzai 进程提供。
 
-## 代理管理
-
-### 系统接管和路由模式
-
-| 接管方式 | 行为 |
-| --- | --- |
-| `off` | 关闭接管。核心可继续运行，应用可手动使用本机代理端口 |
-| `system` | 将当前用户的系统代理指向本机 mihomo。关闭接管时恢复插件记录的原设置 |
-| `tun` | 由 mihomo 创建 `ProxyPlugin` 虚拟网卡并配置路由及 DNS 接管 |
-
-接管方式决定流量如何进入核心。路由模式决定流量进入后如何转发。`rule` 按规则顺序匹配，`global` 使用 `GLOBAL` 组的选择，`direct` 直接连接。
-
-启动新核心前会检查其他 mihomo 或 Clash 核心，以及代理端口和控制端口是否被占用。发现冲突时会提示原因，其他软件的核心由其自身管理。可用 `#代理诊断` 查看详情。保存核心端口、TUN 等启动设置后，使用 `#代理核心重启` 应用。
-
-### 管理多份订阅
-
-可保存最多 50 份订阅，首次添加的订阅默认启用，后续添加的作为备用。同一时间使用一份完整配置，各订阅的节点和规则分别保存。订阅地址须返回完整的 mihomo YAML，可包含代理组、节点和提供者。分享链接和 Base64 节点列表需要先转换为完整配置。
-
-在 WebUI「订阅」页点击编辑按钮，可修改名称、URL、User-Agent 和自动更新周期。只改名称或周期会直接保存。更换 URL 或 User-Agent 会先下载并校验。修改当前启用的订阅会应用到运行中的核心，备用订阅只更新自己的缓存。
-
-切换订阅时优先使用本地缓存，没有缓存才下载。仅节点、代理组或规则等配置变化且满足热重载条件时，可以在当前核心上应用。DNS、TUN 或端口等配置变化可能需要重启核心。手动编辑的订阅规则或 YAML 保存在本地，再次下载该订阅会用服务端内容替换缓存。
 
 ### 配置 mihomo 下载源
 
@@ -161,30 +140,6 @@ download:
 
 `core.mixedPort` 和 `core.controllerPort` 仅监听本机，须使用不同的端口，取值均为 1024–65535 的整数。修改端口、核心路径或接管设置后，可用 `#代理核心重启` 应用。`core.autoStart` 在插件下次加载时读取。日志等级和路由模式的含义见 [mihomo 全局配置](https://wiki.metacubex.one/config/general/)。
 
-### TUN 和系统代理
-
-| 字段 | 用途与取值 |
-| --- | --- |
-| `tun.stack` | TUN 的协议栈。`system` 使用系统协议栈，`gvisor` 使用用户态协议栈，`mixed` 用系统栈处理 TCP、用 gVisor 处理 UDP。 |
-| `tun.strictRoute` | 启用 mihomo 的严格路由。具体行为随系统而异，例如 Windows 会增加用于限制 DNS 从其他接口发出的防火墙规则。 |
-| `system.linuxDesktop` | Linux 系统代理的桌面类型。`auto` 从当前会话识别，`gnome` 或 `kde` 可手动指定。 |
-| `system.bypass` | 系统代理绕过列表，匹配的地址由支持该设置的应用直接访问。Windows 用分号分隔，Linux 可用分号或逗号。 |
-
-`tun` 下的选项在 `takeover: tun` 时生效，`system` 下的选项用于 `takeover: system`。保存后重启核心即可应用。协议栈和严格路由的详细行为见 [mihomo TUN 配置](https://wiki.metacubex.one/config/inbound/tun/)。
-
-
-## 配置文件与数据目录
-
-插件保留订阅或本地 YAML 中的节点、代理组和规则，并按插件设置生成用于启动的配置，包括本机代理端口、控制接口和 TUN 设置。提供者使用相对路径时，以 `data/Proxy-Plugin/` 为基准。
-
-| 数据路径（相对 Yunzai 根目录） | 内容 |
-| --- | --- |
-| `config/Proxy-Plugin.yaml` | 插件设置和订阅地址 |
-| `data/Proxy-Plugin/bin/` 和 `versions/` | 下载的 mihomo 二进制 |
-| `data/Proxy-Plugin/profiles/` | 本地导入的配置、订阅缓存和当前配置 |
-| `data/Proxy-Plugin/runtime/` | 生成的运行配置及核心状态 |
-| `data/Proxy-Plugin/backups/` 和 `recovery/` | 配置备份及系统代理恢复记录 |
-| `data/Proxy-Plugin/logs/mihomo.log` | 核心日志 |
 
 请在锅巴、WebUI 或配置文件中保存长期设置，生成的 `runtime/config.yaml` 会在应用配置时重新写入。备份或分享配置时留意订阅地址、节点凭据和控制密钥。
 

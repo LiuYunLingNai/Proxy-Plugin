@@ -11,6 +11,7 @@ type Settings = {
     controllerPort: number
     autoStart: boolean
     windowsElevate: boolean
+    validationTimeoutSeconds: number
   }
   tun: { stack: string; strictRoute: boolean }
   system: { linuxDesktop: string; bypass: string }
@@ -65,6 +66,7 @@ export function SettingsPanel({
         'core.controllerPort': settings.core.controllerPort,
         'core.autoStart': settings.core.autoStart,
         'core.windowsElevate': settings.core.windowsElevate,
+        'core.validationTimeoutSeconds': settings.core.validationTimeoutSeconds,
         'tun.stack': settings.tun.stack,
         'tun.strictRoute': settings.tun.strictRoute,
         'system.linuxDesktop': settings.system.linuxDesktop,
@@ -209,6 +211,23 @@ export function SettingsPanel({
                 value={mirrors}
                 onChange={event => setMirrors(event.target.value)}
                 placeholder={'https://gh-proxy.com/\nhttps://ghfast.top/\ndirect'}
+              />
+            )}
+          </Field>
+          <Field label="配置校验超时（秒）" help="首次读取 GEO 数据可能需要下载。">
+            {controlId => (
+              <Input
+                id={controlId}
+                type="number"
+                min={5}
+                max={300}
+                value={settings.core.validationTimeoutSeconds}
+                onChange={event =>
+                  setSettings({
+                    ...settings,
+                    core: { ...settings.core, validationTimeoutSeconds: Number(event.target.value) },
+                  })
+                }
               />
             )}
           </Field>

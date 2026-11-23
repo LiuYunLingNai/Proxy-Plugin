@@ -9,7 +9,7 @@ import http from "node:http"
 import YAML from "yaml"
 import { ProxyManager, canReloadProfile } from "../lib/manager.js"
 import { ConfigStore } from "../lib/config.js"
-import { pause } from "../lib/process.js"
+import { execFile, pause } from "../lib/process.js"
 import { tempRoot, fakePlatform } from "./helpers.js"
 import { atomicWrite } from "../lib/storage.js"
 import { Dashboard } from "../lib/dashboard.js"
@@ -162,6 +162,29 @@ test("配置校验失败不会停止当前核心或覆盖有效配置", async t 
   await assert.rejects(manager.importFile(input), /配置校验失败/)
   assert.equal(manager.state.identity.pid, pid)
   assert.equal(await fs.readFile(store.paths.runtime, "utf8"), runtime)
+})
+
+test("配置校验区分超时与退出错误，并返回脱敏后的核心输出", async t => {
+  const { manager, store } = await managerFixture(t)
+  const config = await store.load()
+  config.core.validationTimeoutSeconds = 75
+  await store.save(config)
+  let seconds
+  manager.validator = (_, __, timeout) => {
+    seconds = timeout
+    return execFile(process.execPath, ["-e", 'console.log("开始下载 GeoSite.dat"); setInterval(() => {}, 1000)'], { timeout: 500 })
+  }
+  await assert.rejects(manager.check(), /配置校验超时（75 秒）[\s\S]*开始下载 GeoSite\.dat/)
+  assert.equal(seconds, 75)
+  manager.validator = () => execFile(process.execPath, [
+    "-e",
+    'console.log("规则无法加载 https://example.com/?token=hidden-secret，vless://hidden-node"); process.exitCode = 1',
+  ])
+  await assert.rejects(manager.check(), error => {
+    assert.match(error.message, /配置校验失败：规则无法加载/)
+    assert.doesNotMatch(error.message, /hidden-secret|hidden-node|配置校验超时/)
+    return true
+  })
 })
 
 test("新核心启动失败后重新启动旧配置并恢复系统代理", async t => {

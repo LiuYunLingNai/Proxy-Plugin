@@ -136,6 +136,7 @@ download:
 | `core.autoStart` | 加载插件时是否自动启动核心。关闭时可发送 `#代理核心启动` 手动启动。 |
 | `core.windowsElevate` | Windows 使用 TUN 时，是否通过 UAC 以管理员权限启动 mihomo。开启后需确认 UAC 提示。 |
 | `core.startupTimeoutSeconds` | 启动 mihomo 后等待控制接口就绪的时间，范围为 3–120 秒。 |
+| `core.validationTimeoutSeconds` | 等待 mihomo 校验配置的时间，范围为 5–300 秒。首次加载 GEO 数据时可能需要更久。 |
 | `core.logLevel` | 核心日志详细程度。`silent` 静默，`error` 记录错误，`warning` 加入告警，`info` 加入运行信息，`debug` 输出更详细的调试信息。 |
 | `takeover` | 流量进入 mihomo 的方式。`off` 关闭系统接管，`system` 设置当前用户的系统代理，`tun` 通过虚拟网卡接管流量。 |
 | `mode` | mihomo 收到流量后的转发方式。`rule` 按规则匹配，`global` 使用 `GLOBAL` 代理组的选择，`direct` 直接连接。 |
@@ -151,6 +152,7 @@ download:
 | --- | --- |
 | 检测到其他 mihomo 或 Clash 核心 | 发送 `#代理诊断` 查看进程，在原程序中停止核心，再启动插件的核心 |
 | 代理端口或控制端口被占用 | 在锅巴修改对应端口后重试 |
+| mihomo 配置校验超时 | 查看提示中的最后一段校验输出。如果正在下载 GEO 数据，检查配置中的 GEO 下载地址是否可访问，并按需调高「配置校验超时（秒）」。 |
 | Linux 系统代理无法启用 | 确认 Yunzai 在目标桌面用户的 D-Bus 会话下运行，按需在锅巴指定 GNOME 或 KDE |
 | TUN 启动失败 | 检查 Windows 管理员权限，或 Linux 的 `/dev/net/tun` 与 `CAP_NET_ADMIN` |
 | WebUI 链接打不开 | 检查挂载模式对应的 Yunzai HTTP 地址或独立监听地址。修改设置后重启 Yunzai，重新生成链接 |

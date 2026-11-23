@@ -16,6 +16,7 @@ const fields = [
     "按选中顺序尝试，可新增自定义 HTTPS 前缀。优先镜像时移除直连，再把直连选在最后作为备用。",
   ],
   ["download.timeoutSeconds", "下载超时（秒）", "InputNumber", "单次核心下载超时，5–300 秒。"],
+  ["core.validationTimeoutSeconds", "配置校验超时（秒）", "InputNumber", "等待 mihomo 校验配置，默认 120 秒，可设为 5–300 秒。"],
   ["core.mixedPort", "代理端口", "InputNumber", "默认 17890；仅监听本机。"],
   ["core.controllerPort", "控制端口", "InputNumber", "默认 19090；仅监听本机并使用独立密钥。"],
   ["core.autoStart", "加载后自动启动", "Switch", "首次部署建议关闭，手动验证后再开启。"],

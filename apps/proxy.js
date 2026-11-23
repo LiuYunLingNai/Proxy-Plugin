@@ -47,7 +47,7 @@ export default class ProxyPlugin extends BasePlugin {
       name: "Proxy-Plugin",
       dsc: "mihomo 系统代理与 TUN 管理",
       event: "message",
-      priority: 250,
+      priority: -5000,
       rule: [
         { reg: helpPattern, fnc: "dispatch", permission: "master", log: false },
         {

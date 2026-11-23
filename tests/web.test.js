@@ -76,6 +76,38 @@ test("挂载模式忽略独立端口，关闭 WebUI 不挂载，访问地址可�
   assert.equal(app.skip_auth.includes(WEB_PREFIX + "/"), false)
 })
 
+test("反向代理改写 Host 后仍允许有令牌的浏览器同源请求", async t => {
+  let calls = 0
+  const app = express()
+  const web = new ProxyWebServer({ actions: { status: async () => ({ running: ++calls > 0 }) } })
+  const lease = await web.attachConfigured(defaults.webui, app)
+  const server = app.listen(0, "127.0.0.1")
+  await once(server, "listening")
+  t.after(async () => {
+    await web.release(lease)
+    server.closeAllConnections()
+    await new Promise(resolve => server.close(resolve))
+  })
+  const { token } = web.createSession()
+  const options = { Origin: "https://panel.example", "Sec-Fetch-Site": "same-origin" }
+  const request = (headers, authenticated = true) => fetch(`http://127.0.0.1:${server.address().port}${WEB_PREFIX}/api/action`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(authenticated ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
+    },
+    body: JSON.stringify({ action: "status" }),
+  })
+  assert.equal((await request(options, false)).status, 401)
+  assert.equal((await request({ ...options, "Sec-Fetch-Site": "cross-site" })).status, 403)
+  assert.equal((await request({ ...options, "Sec-Fetch-Site": "same-site" })).status, 403)
+  assert.equal((await request({ Origin: options.Origin, "X-Forwarded-Host": "panel.example", "X-Forwarded-Proto": "https" })).status, 403)
+  assert.equal((await request({ ...options, Origin: "null" })).status, 403)
+  assert.equal((await request(options)).status, 200)
+  assert.equal(calls, 1)
+})
+
 test("独立端口占用失败不残留挂载或 lease，可修改端口后重试", async t => {
   const occupied = express().listen(0, "127.0.0.1")
   await once(occupied, "listening")

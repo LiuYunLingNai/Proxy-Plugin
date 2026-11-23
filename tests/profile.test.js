@@ -9,6 +9,7 @@ import { sameProcess, isCoreName } from "../lib/process.js"
 import { splitArgs } from "../apps/proxy.js"
 import ProxyPlugin from "../apps/proxy.js"
 import { parseGVariant } from "../platforms/index.js"
+import { updateProxyPlugin } from "../lib/update.js"
 
 test("保留原分组、规则和 provider，强制收紧控制接口并明确关闭 TUN", () => {
   const input = {
@@ -214,6 +215,39 @@ test("测速、订阅与状态发送运行结果图，渲染不可用时发送�
   assert.doesNotMatch(status.html, /token=private/)
   const [fallback] = await run("#代理状态", { puppeteer: { screenshot: async () => false } })
   assert.match(fallback, /核心进程：运行中/)
+})
+
+test("联动更新直接调用 Yunzai 更新器，核心更新后才重启机器人", async () => {
+  const rule = new ProxyPlugin().rule.find(item => new RegExp(item.reg).test("#代理更新"))
+  assert.equal(rule?.permission, "master")
+  const order = []
+  const event = { msg: "#代理更新", reply: async () => {} }
+  const updater = {
+    async getPlugin(name) {
+      assert.equal(this.e, event)
+      assert.equal(name, "Proxy-Plugin")
+      order.push("repository")
+      return name
+    },
+    async runUpdate(name) {
+      assert.equal(name, "Proxy-Plugin")
+      order.push("native-update")
+      this.isUp = this.isPkgUp = true
+      return true
+    },
+    async updatePackage() { order.push("dependencies"); return {} },
+    restart() { order.push("restart-yunzai") },
+  }
+  const manager = {
+    async updateTogether(update) {
+      order.push("stop-mihomo")
+      await update()
+      order.push("update-mihomo")
+      return { version: "v1.99.0", running: true }
+    },
+  }
+  await updateProxyPlugin(event, manager, async () => updater)
+  assert.deepEqual(order, ["repository", "stop-mihomo", "native-update", "dependencies", "update-mihomo", "restart-yunzai"])
 })
 
 test("群聊中的更新参数也不能用于提交订阅 URL", async t => {

@@ -802,6 +802,52 @@ test("核心版本切换下载失败或校验失败时保留现有配置", async
   assert.equal(await manager.alive(), true)
 })
 
+test("联动更新先还原系统代理并停止核心，完成后恢复原运行状态", async t => {
+  const { manager, store, platform } = await managerFixture(t)
+  await manager.takeover("system")
+  const runningPid = manager.state.identity.pid
+  const stages = []
+  manager.installer.latest = async config => {
+    assert.equal(await manager.alive(), false)
+    assert.equal(platform.value.server, "previous:8080")
+    stages.push("mihomo")
+    return { ...config.core, path: process.execPath, version: "v1.99.0" }
+  }
+  const update = async () => {
+    assert.equal(await manager.alive(), false)
+    assert.equal(platform.value.server, "previous:8080")
+    stages.push("plugin")
+  }
+  assert.deepEqual(await manager.updateTogether(update), { running: true, version: "v1.99.0" })
+  assert.deepEqual(stages, ["plugin", "mihomo"])
+  assert.notEqual(manager.state.identity.pid, runningPid)
+  assert.equal((await manager.status()).system.owned, true)
+  assert.equal((await store.load()).core.version, "v1.99.0")
+
+  await manager.stop()
+  assert.deepEqual(await manager.updateTogether(update), { running: false, version: "v1.99.0" })
+  assert.equal(await manager.alive(), false)
+  assert.equal(platform.value.server, "previous:8080")
+})
+
+test("联动更新失败会恢复更新前实际运行配置，并保留尚未应用的设置", async t => {
+  const { manager, store, platform } = await managerFixture(t)
+  await manager.takeover("system")
+  const runningPid = manager.state.identity.pid
+  const pending = await store.load()
+  pending.mode = "global"
+  pending.takeover = "off"
+  await store.save(pending)
+  manager.installer.latest = async () => { throw new Error("模拟核心下载失败") }
+  await assert.rejects(manager.updateTogether(async () => {}), /模拟核心下载失败.*已恢复更新前的 mihomo/)
+  assert.equal(await manager.alive(), true)
+  assert.notEqual(manager.state.identity.pid, runningPid)
+  assert.equal(manager.state.config.takeover, "system")
+  assert.equal((await (await manager.client()).configs()).mode, "rule")
+  assert.equal(platform.value.server, `127.0.0.1:${pending.core.mixedPort}`)
+  assert.deepEqual(await store.load(), pending)
+})
+
 test("版本切换使用独立目录，成功后更新核心路径和版本", async t => {
   const { manager, store } = await managerFixture(t)
   await manager.start()

@@ -6,6 +6,7 @@ import { activeSubscription } from "../lib/config.js"
 import { getWebServer, WEB_PREFIX } from "../lib/web-server.js"
 import { helpPattern, isHelpCommand, renderHelp } from "../lib/help.js"
 import { replyReport, speedReport, statusReport, subscriptionReports } from "../lib/report.js"
+import { updateProxyPlugin } from "../lib/update.js"
 
 const names = {
   off: "关闭接管",
@@ -49,12 +50,11 @@ export default class ProxyPlugin extends BasePlugin {
       event: "message",
       priority: -5000,
       rule: [
-        { reg: helpPattern, fnc: "dispatch", permission: "master", log: false },
+        { reg: helpPattern, fnc: "dispatch", permission: "master" },
         {
-          reg: "^#代理(?:状态|部署|核心(?:启动|停止|重启)|接管.*|模式.*|组|节点.*|切换.*|测速.*|订阅.*|配置(?:检查|回滚|导入).*|诊断|恢复|日志|web(?:\\s*\\d+)?|下线)$",
+          reg: "^#代理(?:状态|部署|更新|核心(?:启动|停止|重启)|接管.*|模式.*|组|节点.*|切换.*|测速.*|订阅.*|配置(?:检查|回滚|导入).*|诊断|恢复|日志|web(?:\\s*\\d+)?|下线)$",
           fnc: "dispatch",
           permission: "master",
-          log: false,
         },
       ],
     })
@@ -106,6 +106,7 @@ export default class ProxyPlugin extends BasePlugin {
       if (isHelpCommand(command)) return await reply(await renderHelp(command, e.runtime))
       const manager = getManager()
       await manager.initialize()
+      if (text === "更新") return await updateProxyPlugin(e, manager)
       if (text === "下线") return reply(`已撤销 ${getWebServer().revoke()} 个 WebUI 访问链接。`)
       if (/^web(?:\s*\d+)?$/.test(text)) {
         const web = getWebServer()

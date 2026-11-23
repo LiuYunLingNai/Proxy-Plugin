@@ -1,13 +1,15 @@
 import test from "node:test"
 import assert from "node:assert/strict"
 import http from "node:http"
-import { downloadFromMirrors } from "../lib/installer.js"
+import path from "node:path"
+import { Installer, downloadFromMirrors, versionStore } from "../lib/installer.js"
 import { ConfigStore, defaults, validateConfig } from "../lib/config.js"
 import { getManager } from "../lib/manager.js"
 import { supportGuoba } from "../guoba.support.js"
 import { tempRoot } from "./helpers.js"
+import { atomicWrite, writeJson } from "../lib/storage.js"
 
-async function downloadServer(t) {
+async function downloadServer(t, version = "v1.0") {
   const requests = []
   const server = http.createServer((request, response) => {
     requests.push(request.url)
@@ -15,7 +17,7 @@ async function downloadServer(t) {
       response.writeHead(403)
       response.end("unavailable")
     } else if (request.url.startsWith("/html/")) response.end("<html>not release metadata</html>")
-    else response.end(JSON.stringify({ tag_name: "v1.0", assets: [] }))
+    else response.end(JSON.stringify({ tag_name: version, assets: [] }))
   })
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve))
   t.after(() => {
@@ -55,6 +57,26 @@ test("未选择直连时不会自行添加直连请求", async t => {
     /下载源均失败/,
   )
   assert.equal(requests.length, 1)
+})
+
+test("更新核心强制刷新最新版本信息，并复用该版本已安装的二进制", async t => {
+  const version = "v1.99.0"
+  const { base, requests } = await downloadServer(t, version)
+  const store = new ConfigStore(await tempRoot(t))
+  const config = await store.load()
+  config.core.version = "v1.98.0"
+  config.download.mirrors = [`${base}/mirror/`]
+  await writeJson(path.join(store.data, "runtime", "release.json"), {
+    request: "latest", at: Date.now(), tag_name: "v1.98.0", assets: [],
+  })
+  const binary = path.join(versionStore(store, version).data, "bin", process.platform === "win32" ? "mihomo.exe" : "mihomo")
+  await atomicWrite(binary, "cached core")
+  const core = await new Installer(store).latest(config)
+  assert.equal(core.version, version)
+  assert.equal(path.resolve(core.path), path.resolve(binary))
+  assert.equal(requests.length, 1)
+  assert.match(requests[0], /\/mirror\/https:\/\/api\.github\.com\/repos\/MetaCubeX\/mihomo\/releases\/latest$/)
+  assert.equal(config.core.version, "v1.98.0")
 })
 
 test("锅巴保存下载源顺序，错误前缀被拒绝且不覆盖有效配置", async t => {
